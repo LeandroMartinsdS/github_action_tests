@@ -1,0 +1,33 @@
+name: Create Local Test Branch from Beta Tag
+
+on:
+  push:
+    tags:
+      - '*-beta[0-9]*'
+
+jobs:
+  create-local-test-branch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed to access full history and tags
+
+      - name: Set up Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get tag name
+        id: get_tag
+        run: echo "tag_name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create local test branch from tag
+        run: |
+          TAG_NAME=${{ steps.get_tag.outputs.tag_name }}
+          BRANCH_NAME="local-test-${TAG_NAME}"
+          git checkout -b "$BRANCH_NAME" "$TAG_NAME"
+          git push origin "$BRANCH_NAME"
+
